@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Happiness Clock 🌍😊</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      text-align: center;
+      padding: 50px;
+      color: #333;
+    }
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #ff9a9e;
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 1.2em;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #fad0c4;
+    }
+    #timer {
+      margin-top: 20px;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+    #stats, #history {
+      margin-top: 40px;
+      text-align: center;
+    }
+    #stats div, #history div {
+      margin: 8px 0;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>How do you feel today? 🌈</h1>
+
+  <button onclick="vote('happy')">Happy 😊</button>
+  <button onclick="vote('neutral')">Neutral 😐</button>
+  <button onclick="vote('sad')">Sad 😢</button>
+
+  <div id="timer"></div>
+
+  <div id="stats">
+    <h2>Mood Counter:</h2>
+    <div>😊 Happy: <span id="happyCount">0</span></div>
+    <div>😐 Neutral: <span id="neutralCount">0</span></div>
+    <div>😢 Sad: <span id="sadCount">0</span></div>
+  </div>
+
+  <div id="history">
+    <h2>Recent Votes:</h2>
+    <div id="voteHistory"></div>
+  </div>
+
+  <script>
+    let counts = {
+      happy: 0,
+      neutral: 0,
+      sad: 0
+    };
+
+    let history = [];
+
+    function updateDisplay() {
+      document.getElementById('happyCount').textContent = counts.happy;
+      document.getElementById('neutralCount').textContent = counts.neutral;
+      document.getElementById('sadCount').textContent = counts.sad;
+
+      const historyDiv = document.getElementById('voteHistory');
+      historyDiv.innerHTML = history.map(entry => `${entry.time}: ${entry.mood}`).join('<br>');
+    }
+
+    function vote(mood) {
+      fetch('/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ mood: mood })
+      })
+      .then(response => response.text())
+      .then(message => {
+        alert(message);
+
+        if (message.includes('successful')) {
+          counts[mood]++;
+          history.unshift({
+            time: new Date().toLocaleTimeString(),
+            mood: mood
+          });
+          if (history.length > 10) history.pop(); // Keep max 10 entries
+          updateDisplay();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+
+    function updateTimer() {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const diff = midnight - now;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById('timer').textContent = 
+        `Time until next day: ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+  </script>
+</body>
+</html>
